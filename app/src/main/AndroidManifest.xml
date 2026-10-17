@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ 弹出服药通知需要运行时申请 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 通知/闹钟震动 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 免打扰/静音绕过：渠道绕过免打扰，需用户在设置页授予“勿扰访问”权限 -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- 设备重启后恢复每日提醒 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 精确闹钟（Android 12+ 需在设置页向用户申请授权） -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- 用药提醒为闹钟类应用：安装即获得精确闹钟能力，避免授权缺失导致不准时 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- 闹钟形式的全屏响铃页（Android 14+ 需用户在设置页单独授权） -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- 响铃前台服务 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 响铃期间保持 CPU 运行 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 请求加入电池优化白名单，避免系统在后台延迟/杀死闹钟 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <uses-feature android:name="android.hardware.camera" android:required="true" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
@@ -14,6 +37,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MedicationReminderAssistant">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -24,12 +48,60 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".CameraActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-        <activity android:name=".ConfirmActivity" />
-        <activity android:name=".DetailActivity" />
+
+        <activity
+            android:name=".ConfirmActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".DetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+
+        <!-- 闹钟形式：锁屏全屏响铃页 -->
+        <activity
+            android:name=".AlarmAlertActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:showOnLockScreen="true"
+            android:taskAffinity=""
+            android:turnScreenOn="true" />
+
+        <!-- 到点触发服药提醒 -->
+        <receiver
+            android:name=".service.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- 开机 / 应用更新后重新注册提醒 -->
+        <receiver
+            android:name=".service.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 闹钟形式提醒的持续响铃前台服务 -->
+        <service
+            android:name=".service.AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="medication_alarm_reminder" />
+        </service>
     </application>
 
 </manifest>

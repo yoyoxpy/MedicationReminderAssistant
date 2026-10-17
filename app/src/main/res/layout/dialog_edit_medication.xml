@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/etEditName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/brand_primary"
+            android:hint="药品名称（必填）"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="@android:color/black"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/etEditDosage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:backgroundTint="@color/brand_primary"
+            android:hint="每次剂量，如：1片(0.5g) / 2粒 / 1袋(50mg) / 5ml"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="@android:color/black"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/etEditTimes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:backgroundTint="@color/brand_primary"
+            android:hint="提醒时间（24小时制，逗号分隔），如：08:00, 12:30, 18:30"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="@android:color/black"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/etEditNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/brand_primary"
+            android:hint="备注，如：饭后服用"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="@android:color/black"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+</ScrollView>

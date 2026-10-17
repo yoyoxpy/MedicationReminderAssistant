@@ -2,4 +2,14 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 应用主色：医药绿 -->
+    <color name="brand_primary">#2E7D66</color>
+    <color name="brand_primary_dark">#1F5C4A</color>
+    <color name="brand_light">#E8F3EF</color>
+    <color name="page_background">#F4F7F6</color>
+    <color name="text_primary">#1F2933</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="divider">#E2E8F0</color>
+    <color name="danger">#D32F2F</color>
 </resources>
