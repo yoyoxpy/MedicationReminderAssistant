@@ -32,6 +32,7 @@ import com.example.medicationreminderassistant.service.NotificationService;
 import com.example.medicationreminderassistant.util.ImageUtils;
 import com.example.medicationreminderassistant.util.SettingsManager;
 import com.example.medicationreminderassistant.util.TimeUtils;
+import com.example.medicationreminderassistant.widget.FloatingBallView;
 
 import java.util.HashSet;
 import java.util.List;
@@ -92,6 +93,9 @@ public class MainActivity extends AppCompatActivity {
 
         requestNotificationPermissionIfNeeded();
         maybePromptBatteryOptimization();
+
+        // 主页挂载 AI 助手悬浮球（可拖动，点击进入聊天）
+        FloatingBallView.attach(this);
     }
 
     @Override

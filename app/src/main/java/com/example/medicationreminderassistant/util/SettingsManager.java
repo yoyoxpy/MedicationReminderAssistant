@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
  * - 是否语音播报（药品名称 + 剂量 + 服用方法）
  * - 漏服（未打卡）时是否延迟重提醒、重提醒间隔分钟数
  * - 闹钟铃声来源（跟随系统 / 内置旋律）与响铃持续时间
- * - 语音播报音色（女声 / 男声）与语速、音调
  */
 public class SettingsManager {
 
@@ -22,14 +21,6 @@ public class SettingsManager {
 
     /** 可选的响铃持续时间（分钟） */
     public static final int[] RING_DURATION_MINUTES = {1, 5, 10, 15};
-
-    /** 语音音色：女声 / 男声 */
-    public static final int GENDER_FEMALE = 0;
-    public static final int GENDER_MALE = 1;
-
-    /** 各音色的默认音调（女声偏高、男声偏低） */
-    public static final float DEFAULT_PITCH_FEMALE = 1.2f;
-    public static final float DEFAULT_PITCH_MALE = 0.8f;
 
     /** 闹钟铃声：跟随系统闹钟 */
     public static final String RINGER_SYSTEM = "system";
@@ -47,9 +38,6 @@ public class SettingsManager {
     private static final String KEY_REMIND_AGAIN_MINUTES = "remind_again_minutes";
     private static final String KEY_RINGER = "alarm_ringer";
     private static final String KEY_RING_DURATION_MINUTES = "ring_duration_minutes";
-    private static final String KEY_TTS_GENDER = "tts_gender";
-    private static final String KEY_TTS_PITCH = "tts_pitch";
-    private static final String KEY_TTS_RATE = "tts_rate";
 
     private final SharedPreferences prefs;
 
@@ -118,34 +106,5 @@ public class SettingsManager {
 
     public void setRingDurationMinutes(int minutes) {
         prefs.edit().putInt(KEY_RING_DURATION_MINUTES, minutes).apply();
-    }
-
-    /** 语音音色，默认女声 */
-    public int getTtsGender() {
-        return prefs.getInt(KEY_TTS_GENDER, GENDER_FEMALE);
-    }
-
-    public void setTtsGender(int gender) {
-        prefs.edit().putInt(KEY_TTS_GENDER, gender).apply();
-    }
-
-    /** 语音音调，未设置时取当前音色的默认音调 */
-    public float getTtsPitch() {
-        float fallback = getTtsGender() == GENDER_MALE
-                ? DEFAULT_PITCH_MALE : DEFAULT_PITCH_FEMALE;
-        return prefs.getFloat(KEY_TTS_PITCH, fallback);
-    }
-
-    public void setTtsPitch(float pitch) {
-        prefs.edit().putFloat(KEY_TTS_PITCH, pitch).apply();
-    }
-
-    /** 语音语速，默认 1.0（正常语速） */
-    public float getTtsRate() {
-        return prefs.getFloat(KEY_TTS_RATE, 1.0f);
-    }
-
-    public void setTtsRate(float rate) {
-        prefs.edit().putFloat(KEY_TTS_RATE, rate).apply();
     }
 }

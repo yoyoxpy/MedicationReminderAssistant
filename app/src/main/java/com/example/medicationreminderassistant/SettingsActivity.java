@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.RadioGroup;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,19 +37,10 @@ public class SettingsActivity extends AppCompatActivity {
     private Button btnGrantFullScreen;
     private RadioGroup rgRingDuration;
     private RadioGroup rgRinger;
-    private RadioGroup rgTtsGender;
-    private SeekBar sbTtsRate;
-    private SeekBar sbTtsPitch;
-    private TextView tvTtsRateValue;
-    private TextView tvTtsPitchValue;
     private TextView tvDndPermission;
     private Button btnGrantDnd;
     /** 勿扰权限的上一次状态，用于检测“刚授权”后重建通知渠道 */
     private Boolean dndPermissionKnown = null;
-
-    /** 语速 / 音调滑杆取值区间：0.5x ~ 2.0x，步长 0.05 */
-    private static final float TTS_MIN = 0.5f;
-    private static final float TTS_STEP = 0.05f;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,11 +60,6 @@ public class SettingsActivity extends AppCompatActivity {
         btnGrantFullScreen = findViewById(R.id.btnGrantFullScreen);
         rgRingDuration = findViewById(R.id.rgRingDuration);
         rgRinger = findViewById(R.id.rgRinger);
-        rgTtsGender = findViewById(R.id.rgTtsGender);
-        sbTtsRate = findViewById(R.id.sbTtsRate);
-        sbTtsPitch = findViewById(R.id.sbTtsPitch);
-        tvTtsRateValue = findViewById(R.id.tvTtsRateValue);
-        tvTtsPitchValue = findViewById(R.id.tvTtsPitchValue);
         tvDndPermission = findViewById(R.id.tvDndPermission);
         btnGrantDnd = findViewById(R.id.btnGrantDnd);
 
@@ -88,12 +73,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         checkRingDuration(settingsManager.getRingDurationMinutes());
         checkRinger(settingsManager.getRinger());
-        rgTtsGender.check(settingsManager.getTtsGender() == SettingsManager.GENDER_MALE
-                ? R.id.rbMale : R.id.rbFemale);
-        sbTtsRate.setProgress(progressFromValue(settingsManager.getTtsRate()));
-        sbTtsPitch.setProgress(progressFromValue(settingsManager.getTtsPitch()));
-        updateTtsValueLabels();
-        setupTtsControls();
 
         switchRemindAgain.setOnCheckedChangeListener(
                 (button, checked) -> updateRemindAgainEnabledState());
@@ -159,63 +138,6 @@ public class SettingsActivity extends AppCompatActivity {
             return SettingsManager.RINGER_TONE_3;
         }
         return SettingsManager.RINGER_SYSTEM;
-    }
-
-    // ---------------- 语音音色 ----------------
-
-    private void setupTtsControls() {
-        sbTtsRate.setOnSeekBarChangeListener(new SimpleSeekListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                updateTtsValueLabels();
-            }
-        });
-        sbTtsPitch.setOnSeekBarChangeListener(new SimpleSeekListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                updateTtsValueLabels();
-            }
-        });
-        rgTtsGender.setOnCheckedChangeListener((group, checkedId) -> {
-            // 切换音色时同步调整到该音色的建议音调
-            sbTtsPitch.setProgress(progressFromValue(
-                    checkedId == R.id.rbMale
-                            ? SettingsManager.DEFAULT_PITCH_MALE
-                            : SettingsManager.DEFAULT_PITCH_FEMALE));
-            updateTtsValueLabels();
-        });
-    }
-
-    private void updateTtsValueLabels() {
-        tvTtsRateValue.setText(String.format(java.util.Locale.getDefault(),
-                "%.2fx", valueFromProgress(sbTtsRate.getProgress())));
-        tvTtsPitchValue.setText(String.format(java.util.Locale.getDefault(),
-                "%.2fx", valueFromProgress(sbTtsPitch.getProgress())));
-    }
-
-    private static float valueFromProgress(int progress) {
-        return TTS_MIN + progress * TTS_STEP;
-    }
-
-    private static int progressFromValue(float value) {
-        int progress = Math.round((value - TTS_MIN) / TTS_STEP);
-        return Math.max(0, Math.min(30, progress));
-    }
-
-    private int selectedTtsGender() {
-        return rgTtsGender.getCheckedRadioButtonId() == R.id.rbMale
-                ? SettingsManager.GENDER_MALE : SettingsManager.GENDER_FEMALE;
-    }
-
-    /** 只需监听进度变化的 SeekBar 简化实现 */
-    private abstract static class SimpleSeekListener implements SeekBar.OnSeekBarChangeListener {
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-        }
     }
 
     private void checkRemindAgainMinutes(int minutes) {
@@ -407,9 +329,6 @@ public class SettingsActivity extends AppCompatActivity {
         settingsManager.setRemindAgainMinutes(selectedRemindAgainMinutes());
         settingsManager.setRingDurationMinutes(selectedRingDuration());
         settingsManager.setRinger(selectedRinger());
-        settingsManager.setTtsGender(selectedTtsGender());
-        settingsManager.setTtsPitch(valueFromProgress(sbTtsPitch.getProgress()));
-        settingsManager.setTtsRate(valueFromProgress(sbTtsRate.getProgress()));
 
         // 震动/铃声配置在建渠道时生效，需要重建；调度方式随提醒方式变化，需要重新注册
         NotificationService.refreshChannels(getApplicationContext());
