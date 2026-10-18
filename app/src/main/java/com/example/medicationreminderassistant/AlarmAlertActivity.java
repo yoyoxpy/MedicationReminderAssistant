@@ -17,6 +17,7 @@ import com.example.medicationreminderassistant.model.Medication;
 import com.example.medicationreminderassistant.service.AlarmService;
 import com.example.medicationreminderassistant.service.MedicationDatabase;
 import com.example.medicationreminderassistant.service.NotificationService;
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.TimeUtils;
 
 import java.util.ArrayList;
@@ -85,6 +86,8 @@ public class AlarmAlertActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_alarm_alert);
+        // 底部三个操作按钮自动避开导航栏
+        InsetsHelper.applyBottomNavInset(this);
 
         reminderTime = getIntent().getStringExtra(AlarmService.EXTRA_TIME);
         if (reminderTime == null) {

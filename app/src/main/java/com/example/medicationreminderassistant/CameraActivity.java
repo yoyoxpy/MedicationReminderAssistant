@@ -21,6 +21,7 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
@@ -50,6 +51,8 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+        // 快门按钮自动避开导航栏
+        InsetsHelper.applyBottomNavInset(this);
 
         previewView = findViewById(R.id.previewView);
         btnCapture = findViewById(R.id.btnCapture);

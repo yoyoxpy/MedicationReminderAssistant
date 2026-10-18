@@ -20,6 +20,7 @@ import com.example.medicationreminderassistant.service.MedicationDatabase;
 import com.example.medicationreminderassistant.service.NotificationService;
 import com.example.medicationreminderassistant.service.RecognitionService;
 import com.example.medicationreminderassistant.util.ImageUtils;
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.TimeUtils;
 
 import java.io.File;
@@ -50,6 +51,7 @@ public class ConfirmActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm);
+        InsetsHelper.applyBottomNavInset(this);
         setTitle("核对识别结果");
 
         ivPrescription = findViewById(R.id.ivPrescription);

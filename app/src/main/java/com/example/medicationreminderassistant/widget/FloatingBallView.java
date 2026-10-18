@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.medicationreminderassistant.ChatActivity;
 
@@ -29,6 +31,10 @@ public class FloatingBallView extends AppCompatTextView {
     private float startTranslationX, startTranslationY;
     private boolean dragging;
     private final int touchSlop;
+    /** 系统栏 insets：状态栏高度与导航栏高度（edge-to-edge 下非 0，否则为 0） */
+    private int topInset, navBottomInset;
+    /** 首次定位完成前不随 insets 调整位置 */
+    private boolean positioned;
 
     /** 把悬浮球添加到 Activity 根内容层，初始位置右下角 */
     public static void attach(Activity activity) {
@@ -47,6 +53,7 @@ public class FloatingBallView extends AppCompatTextView {
                     float y = Math.max(0, content.getHeight() * 0.55f - size / 2f);
                     ball.setTranslationX(x);
                     ball.setTranslationY(y);
+                    ball.positioned = true;
                 } catch (Exception ignored) {
                     // 初始定位失败时保持默认位置
                 }
@@ -69,6 +76,30 @@ public class FloatingBallView extends AppCompatTextView {
         bg.setShape(GradientDrawable.OVAL);
         setBackground(bg);
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+
+        // 监听系统栏 insets：开启三键导航栏时悬浮球自动贴合其上方，
+        // 关闭导航栏（全面屏手势）后可回到底部；切换导航栏模式时 insets 重新下发自动生效
+        ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
+            int top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            int nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            if (top != topInset || nav != navBottomInset) {
+                float oldMaxY = maxY();
+                topInset = top;
+                navBottomInset = nav;
+                if (positioned) {
+                    float newMaxY = maxY();
+                    float ty = getTranslationY();
+                    // 原本贴底时跟随边界移动（贴合导航栏上方/回到底部），越界时收回
+                    if (ty >= oldMaxY - 2f || ty > newMaxY) {
+                        setTranslationY(newMaxY);
+                    }
+                    if (getTranslationY() < topInset) {
+                        setTranslationY(topInset);
+                    }
+                }
+            }
+            return insets;
+        });
     }
 
     @Override
@@ -92,8 +123,7 @@ public class FloatingBallView extends AppCompatTextView {
                     if (parent != null) {
                         float nx = Math.max(0, Math.min(startTranslationX + dx,
                                 parent.getWidth() - getWidth()));
-                        float ny = Math.max(0, Math.min(startTranslationY + dy,
-                                parent.getHeight() - getHeight()));
+                        float ny = Math.max(topInset, Math.min(startTranslationY + dy, maxY()));
                         setTranslationX(nx);
                         setTranslationY(ny);
                     }
@@ -115,6 +145,15 @@ public class FloatingBallView extends AppCompatTextView {
         Context context = getContext();
         context.startActivity(new Intent(context, ChatActivity.class));
         return true;
+    }
+
+    /** 允许停留的最大 Y（底部已扣除导航栏高度，导航栏关闭时为内容层底边） */
+    private float maxY() {
+        ViewGroup parent = (ViewGroup) getParent();
+        if (parent == null) {
+            return 0;
+        }
+        return parent.getHeight() - getHeight() - navBottomInset;
     }
 
     private static int dp(Context context, int value) {

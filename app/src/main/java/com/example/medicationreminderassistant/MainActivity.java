@@ -30,6 +30,7 @@ import com.example.medicationreminderassistant.service.AlarmService;
 import com.example.medicationreminderassistant.service.MedicationDatabase;
 import com.example.medicationreminderassistant.service.NotificationService;
 import com.example.medicationreminderassistant.util.ImageUtils;
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.SettingsManager;
 import com.example.medicationreminderassistant.util.TimeUtils;
 import com.example.medicationreminderassistant.widget.FloatingBallView;
@@ -52,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // 底部内容自动避开导航栏：开导航栏时贴其上方，关闭后回到底部
+        InsetsHelper.applyBottomNavInset(this);
 
         database = MedicationDatabase.getInstance(this);
 

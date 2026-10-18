@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.example.medicationreminderassistant.service.NotificationService;
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.SettingsManager;
 
 /**
@@ -46,6 +47,8 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        // 底部按钮自动避开导航栏
+        InsetsHelper.applyBottomNavInset(this);
 
         settingsManager = new SettingsManager(this);
 

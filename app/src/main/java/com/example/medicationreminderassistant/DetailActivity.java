@@ -18,6 +18,7 @@ import com.example.medicationreminderassistant.model.Medication;
 import com.example.medicationreminderassistant.service.MedicationDatabase;
 import com.example.medicationreminderassistant.service.NotificationService;
 import com.example.medicationreminderassistant.util.ImageUtils;
+import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.TimeUtils;
 import com.example.medicationreminderassistant.widget.MedicationCalendarView;
 
@@ -49,6 +50,8 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        // 底部操作按钮自动避开导航栏
+        InsetsHelper.applyBottomNavInset(this);
 
         long medicationId = getIntent().getLongExtra(EXTRA_MEDICATION_ID, -1L);
         database = MedicationDatabase.getInstance(this);
