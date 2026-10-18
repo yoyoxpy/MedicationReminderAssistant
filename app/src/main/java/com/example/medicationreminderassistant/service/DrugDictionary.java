@@ -105,7 +105,11 @@ public final class DrugDictionary {
         return false;
     }
 
-    /** 模糊纠错：与标准名编辑距离 <=2 时返回标准名，否则返回原名 */
+    /**
+     * 模糊纠错：仅当 OCR 名不在标准库中、且与某个标准名仅差 1 个字符（同长度，
+     * 即单字替换笔误，如"利巴书林颗粒"->"利巴韦林颗粒"）时才纠正。
+     * 差 2 字或长度不同一律保留原名，避免把 A 药误改成 B 药。
+     */
     public static String correctName(String name) {
         if (name == null) {
             return null;
@@ -123,8 +127,7 @@ public final class DrugDictionary {
                 best = std;
             }
         }
-        // 差 1~2 个字才纠（避免误纠），且长度接近
-        if (best != null && bestDist <= 2 && Math.abs(best.length() - n.length()) <= 1) {
+        if (best != null && bestDist == 1 && best.length() == n.length()) {
             return best;
         }
         return n;

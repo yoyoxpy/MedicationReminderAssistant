@@ -131,6 +131,13 @@ public class ConfirmActivity extends AppCompatActivity {
             etDosage.setText(safe(medication.getDosage()));
             etTimes.setText(TimeUtils.timesToCsv(medication.getTimes()));
             etNote.setText(safe(medication.getNote()));
+            // 若药名被标准库纠错，提示用户 OCR 原始识别内容以便核对
+            String ocrName = medication.getOcrName();
+            if (ocrName != null && !ocrName.isEmpty() && !ocrName.equals(medication.getName())) {
+                TextView tvOcrHint = card.findViewById(R.id.tvOcrHint);
+                tvOcrHint.setText("OCR 识别为：" + ocrName + "（已校准为上方名称）");
+                tvOcrHint.setVisibility(View.VISIBLE);
+            }
         }
 
         btnDelete.setOnClickListener(v -> medicationContainer.removeView(card));

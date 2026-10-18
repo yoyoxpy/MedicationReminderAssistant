@@ -18,6 +18,9 @@ public class Medication {
     private String startDate;
     private long createdAt;
 
+    /** OCR 原始识别的药品名（仅用于确认页提示，不入库）；为空表示未被纠错 */
+    private transient String ocrName;
+
     public Medication() {
         this.times = new ArrayList<>();
         this.enabled = true;
@@ -105,5 +108,13 @@ public class Medication {
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getOcrName() {
+        return ocrName;
+    }
+
+    public void setOcrName(String ocrName) {
+        this.ocrName = ocrName;
     }
 }

@@ -43,7 +43,8 @@ public class FloatingBallView extends AppCompatTextView {
             ball.post(() -> {
                 try {
                     float x = Math.max(0, content.getWidth() - size - dp(activity, MARGIN_DP));
-                    float y = Math.max(0, content.getHeight() - size - dp(activity, MARGIN_DP) * 4);
+                    // 初始位置放在屏幕中下部（约 55% 高度），避开底部导航栏和"拍照识别"按钮
+                    float y = Math.max(0, content.getHeight() * 0.55f - size / 2f);
                     ball.setTranslationX(x);
                     ball.setTranslationY(y);
                 } catch (Exception ignored) {

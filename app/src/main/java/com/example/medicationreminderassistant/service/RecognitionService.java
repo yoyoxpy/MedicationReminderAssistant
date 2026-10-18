@@ -151,7 +151,8 @@ public class RecognitionService {
                 continue;
             }
 
-            // 药品标准库模糊纠错：利巴书林颗粒 -> 利巴韦林颗粒
+            // 药品标准库模糊纠错：仅单字笔误才纠正（利巴书林颗粒 -> 利巴韦林颗粒）
+            String ocrName = name;
             name = DrugDictionary.correctName(name);
             if (result.containsKey(name)) {
                 lastDrug = result.get(name);
@@ -171,6 +172,10 @@ public class RecognitionService {
             medication.setTimes(times);
             medication.setNote(buildNote(line));
             medication.setEnabled(true);
+            // 若药名被标准库纠错，记录 OCR 原始名供确认页提示用户核对
+            if (!ocrName.equals(name)) {
+                medication.setOcrName(ocrName);
+            }
             result.put(name, medication);
 
             lastDrug = medication;
