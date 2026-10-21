@@ -16,9 +16,15 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
+import com.example.medicationreminderassistant.model.Medication;
+import com.example.medicationreminderassistant.service.AlarmService;
+import com.example.medicationreminderassistant.service.MedicationDatabase;
 import com.example.medicationreminderassistant.service.NotificationService;
+import com.example.medicationreminderassistant.service.TTSService;
 import com.example.medicationreminderassistant.util.InsetsHelper;
 import com.example.medicationreminderassistant.util.SettingsManager;
+
+import java.util.List;
 
 /**
  * 提醒设置页：选择消息通知/闹钟方式、震动与语音播报开关、申请精确闹钟权限。
@@ -83,7 +89,43 @@ public class SettingsActivity extends AppCompatActivity {
         btnGrantFullScreen.setOnClickListener(v -> requestFullScreenPermission());
         btnGrantDnd.setOnClickListener(v -> requestDndPermission());
         findViewById(R.id.btnNotificationSettings).setOnClickListener(v -> openNotificationSettings());
+        findViewById(R.id.btnTestAlarm).setOnClickListener(v -> testReminder());
         findViewById(R.id.btnDone).setOnClickListener(v -> saveAndFinish());
+    }
+
+    /**
+     * 立即走一次真实的提醒链路，用于区分“铃声链路故障”和“闹钟未触发”。
+     * 闹钟方式：启动响铃服务响 10 秒；消息通知方式：立即弹通知并播报语音。
+     */
+    private void testReminder() {
+        Medication target = null;
+        List<Medication> all = MedicationDatabase.getInstance(this).getAllMedications();
+        for (Medication m : all) {
+            if (m.isEnabled()) {
+                target = m;
+                break;
+            }
+        }
+        if (target == null) {
+            Toast.makeText(this, "请先在主页添加一条已开启的药品再测试", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (settingsManager.getReminderMode() == SettingsManager.MODE_ALARM) {
+            try {
+                AlarmService.startTest(this, target.getId());
+                Toast.makeText(this, "测试提醒已触发，请留意铃声", Toast.LENGTH_SHORT).show();
+            } catch (Throwable t) {
+                Toast.makeText(this, "启动响铃失败：" + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            NotificationService.showReminderNotification(this, target);
+            if (settingsManager.isTtsEnabled()) {
+                TTSService.get(this).speakWithSettings(
+                        NotificationService.buildSpeechText(target), settingsManager);
+            }
+            Toast.makeText(this, "已发送测试通知（当前为消息通知方式）", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ---------------- 响铃持续时间 ----------------

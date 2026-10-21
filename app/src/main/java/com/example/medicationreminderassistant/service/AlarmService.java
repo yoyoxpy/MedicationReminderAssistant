@@ -44,6 +44,9 @@ public class AlarmService extends Service {
     public static final String EXTRA_MED_IDS = "alarm_med_ids";
     public static final String EXTRA_NOTIF_ID = "alarm_notif_id";
     public static final String EXTRA_TIME = "alarm_time";
+    /** 设置页“测试提醒”使用：只响 10 秒，用于验证铃声链路 */
+    public static final String EXTRA_TEST = "alarm_test";
+    private static final long TEST_DURATION_MS = 10_000L;
 
     private static final String TAG = "AlarmService";
     private static final long[] VIBRATION_PATTERN = {0, 800, 600, 800};
@@ -89,6 +92,16 @@ public class AlarmService extends Service {
         context.stopService(new Intent(context, AlarmService.class));
     }
 
+    /** 立即响一次（10 秒）用于验证铃声链路，不依赖定时触发 */
+    public static void startTest(Context context, long medicationId) {
+        Intent intent = new Intent(context, AlarmService.class);
+        intent.putExtra(EXTRA_MED_IDS, new long[]{medicationId});
+        intent.putExtra(EXTRA_NOTIF_ID, (int) medicationId);
+        intent.putExtra(EXTRA_TIME, "");
+        intent.putExtra(EXTRA_TEST, true);
+        ContextCompat.startForegroundService(context, intent);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -111,6 +124,7 @@ public class AlarmService extends Service {
         }
         notificationId = intent.getIntExtra(EXTRA_NOTIF_ID, (int) ids[0]);
         String time = intent.getStringExtra(EXTRA_TIME);
+        boolean testMode = intent.getBooleanExtra(EXTRA_TEST, false);
 
         List<Medication> medications = loadMedications(ids);
         if (medications.isEmpty()) {
@@ -181,7 +195,11 @@ public class AlarmService extends Service {
         // 8. 到达"响铃持续时间"仍无人操作时自动停铃
         // 先清掉上一批提醒遗留的定时器，避免新提醒被旧定时器提前停掉
         handler.removeCallbacksAndMessages(null);
-        long durationMs = settings.getRingDurationMinutes() * 60_000L;
+        long durationMs = testMode
+                ? TEST_DURATION_MS
+                : settings.getRingDurationMinutes() * 60_000L;
+        Log.i(TAG, "响铃开始 test=" + testMode + " durationMs=" + durationMs
+                + " tts=" + settings.isTtsEnabled() + " vibrate=" + settings.isVibrateEnabled());
         handler.postDelayed(this::stopSelf, durationMs);
 
         return START_STICKY;
@@ -245,26 +263,68 @@ public class AlarmService extends Service {
     }
 
     private void playAlarmSound() {
+        // 闹钟音量为 0 是"权限都正常但完全不响"的最常见原因，先纠正再播放
+        ensureAudibleAlarmVolume();
+
         Uri alarmUri = NotificationService.resolveAlarmSoundUri(this);
-        if (alarmUri != null) {
-            try {
-                mediaPlayer = new MediaPlayer();
-                mediaPlayer.setDataSource(this, alarmUri);
-                mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build());
-                mediaPlayer.setLooping(true);
-                mediaPlayer.prepare();
-                mediaPlayer.start();
-                return;
-            } catch (Exception e) {
-                Log.e(TAG, "播放闹钟铃声失败，改用系统合成提示音", e);
-                releaseMediaPlayer();
-            }
+        Log.i(TAG, "准备播放闹钟铃声 uri=" + alarmUri);
+        if (alarmUri == null) {
+            // 设备没有可用铃声时直接用合成音，保证一定有声音
+            startFallbackTone();
+            return;
         }
-        // 兜底：设备无可用铃声 URI 或播放失败时，用合成音持续鸣响（不依赖任何音频文件）
-        startFallbackTone();
+        try {
+            releaseMediaPlayer();
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(this, alarmUri);
+            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build());
+            mediaPlayer.setLooping(true);
+            mediaPlayer.setOnPreparedListener(mp -> {
+                try {
+                    mp.start();
+                    Log.i(TAG, "铃声已开始播放 playing=" + mp.isPlaying());
+                } catch (Exception e) {
+                    Log.e(TAG, "铃声启动失败，改用合成提示音", e);
+                    releaseMediaPlayer();
+                    startFallbackTone();
+                }
+            });
+            mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                Log.e(TAG, "铃声播放错误 what=" + what + " extra=" + extra);
+                releaseMediaPlayer();
+                startFallbackTone();
+                return true;
+            });
+            // 异步准备避免在主线程阻塞导致 ANR
+            mediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            Log.e(TAG, "设置铃声失败，改用合成提示音", e);
+            releaseMediaPlayer();
+            startFallbackTone();
+        }
+    }
+
+    /** 检查闹钟音量；为 0 时临时提升，避免"设置了铃声却完全没声" */
+    private void ensureAudibleAlarmVolume() {
+        try {
+            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager == null) {
+                return;
+            }
+            int current = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+            int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+            Log.i(TAG, "闹钟音量=" + current + "/" + max);
+            if (current == 0 && max > 0) {
+                int target = Math.max(1, Math.round(max * 0.7f));
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, target, 0);
+                Log.w(TAG, "闹钟音量为 0，已临时提升到 " + target + "/" + max);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "检查或提升闹钟音量失败", e);
+        }
     }
 
     private void startFallbackTone() {

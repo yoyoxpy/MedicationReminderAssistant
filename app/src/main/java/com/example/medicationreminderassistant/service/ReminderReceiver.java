@@ -91,6 +91,18 @@ public class ReminderReceiver extends BroadcastReceiver {
                 } else {
                     handleScheduled(context, medication, time, settings);
                 }
+            } catch (Throwable t) {
+                // 广播线程未捕获异常会直接杀死整个进程，导致提醒彻底无声无息
+                Log.e(TAG, "处理提醒异常，尝试通知兜底", t);
+                try {
+                    Medication fallback = MedicationDatabase.getInstance(context)
+                            .getMedication(medicationId);
+                    if (fallback != null) {
+                        NotificationService.showReminderNotification(context, fallback);
+                    }
+                } catch (Exception ignored) {
+                    // 兜底失败只能记录日志
+                }
             } finally {
                 // 给 TTS 异步初始化和播报留出时间
                 new Handler(Looper.getMainLooper())
@@ -165,7 +177,22 @@ public class ReminderReceiver extends BroadcastReceiver {
             for (int i = 0; i < group.size(); i++) {
                 ids[i] = group.get(i).getId();
             }
-            AlarmService.start(context, ids, notificationId, time);
+            try {
+                AlarmService.start(context, ids, notificationId, time);
+            } catch (Throwable t) {
+                // 后台启动前台服务可能被系统拦截（如未获自启动/后台运行权限），
+                // 此时回退为横幅通知 + 语音，至少让用户感知到提醒
+                Log.e(TAG, "启动响铃服务失败，回退为通知提醒", t);
+                NotificationService.showReminderNotification(context, group, notificationId);
+                if (settings.isTtsEnabled()) {
+                    try {
+                        TTSService.get(context).speakWithSettings(
+                                NotificationService.buildSpeechText(group), settings);
+                    } catch (Exception ignored) {
+                        // 语音失败不影响通知
+                    }
+                }
+            }
         } else {
             NotificationService.showReminderNotification(context, group, notificationId);
             if (settings.isTtsEnabled()) {

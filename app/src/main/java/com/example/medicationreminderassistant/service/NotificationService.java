@@ -55,8 +55,8 @@ public class NotificationService {
 
     // 渠道设置（铃声/震动/免打扰绕过）创建后不可修改，旧渠道若曾以静音参数创建将永久静音，
     // 故使用带版本号的渠道 ID，保证首次升级后即建立带闹钟铃声、可绕过免打扰的新渠道。
-    private static final String CHANNEL_NOTIFICATION = "medication_notification_v3";
-    private static final String CHANNEL_ALARM = "medication_alarm_v3";
+    private static final String CHANNEL_NOTIFICATION = "medication_notification_v4";
+    private static final String CHANNEL_ALARM = "medication_alarm_v4";
 
     private static final int MAX_TIMES_PER_DAY = 8;
     private static final int SNOOZE_SLOT = 98;
@@ -236,6 +236,12 @@ public class NotificationService {
         }
         Log.d(TAG, "rescheduleAll: 共 " + all.size()
                 + " 条药品，其中 " + scheduled + " 条已开启提醒");
+        AlarmManager manager = alarmManager(context);
+        boolean exactAllowed = manager != null
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && manager.canScheduleExactAlarms();
+        Log.i(TAG, "rescheduleAll 完成，精确闹钟权限=" + exactAllowed
+                + " 提醒方式=" + new SettingsManager(context).getReminderMode());
     }
 
     /** 同一时刻（HH:mm）需要服用的全部启用药品，用于合并提醒 */
@@ -485,7 +491,8 @@ public class NotificationService {
         if (vibrate) {
             messageChannel.setVibrationPattern(pattern);
         }
-        messageChannel.setSound(resolveSoundUri(context, RingtoneManager.TYPE_NOTIFICATION),
+        Uri messageSound = resolveSoundUri(context, RingtoneManager.TYPE_NOTIFICATION);
+        messageChannel.setSound(messageSound,
                 new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -493,6 +500,10 @@ public class NotificationService {
         manager.createNotificationChannel(messageChannel);
 
         Uri alarmSound = resolveAlarmSoundUri(context);
+        Log.i(TAG, "通知渠道已创建，通知音=" + messageSound + " 闹钟音=" + alarmSound);
+        if (messageSound == null) {
+            Log.w(TAG, "系统没有可用通知铃声，消息通知将静音；建议改用闹钟提醒方式");
+        }
         NotificationChannel alarmChannel = new NotificationChannel(
                 CHANNEL_ALARM, "用药闹钟", NotificationManager.IMPORTANCE_HIGH);
         alarmChannel.setDescription("全屏响铃式的服药闹钟");

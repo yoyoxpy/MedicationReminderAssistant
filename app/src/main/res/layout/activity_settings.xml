@@ -29,6 +29,49 @@
             android:paddingHorizontal="12dp"
             android:paddingBottom="20dp">
 
+            <!-- 提醒自检 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="6dp"
+                app:cardBackgroundColor="@color/brand_light"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="提醒自检"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="立即触发一次真实的提醒流程（响铃约 10 秒），用来确认铃声、震动和语音是否正常。若这里能响、到点却不响，说明是系统后台限制导致闹钟未触发，请检查电池优化与自启动设置"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnTestAlarm"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:backgroundTint="@color/brand_primary"
+                        android:text="立即测试提醒"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 提醒方式 -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
